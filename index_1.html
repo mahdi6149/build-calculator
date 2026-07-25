@@ -1,0 +1,1876 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Смета на дом — калькулятор</title>
+<style>
+  :root{
+    --bg: #0f2038;
+    --bg-2: #142c4b;
+    --panel: #16304f;
+    --grid: rgba(255,255,255,0.07);
+    --grid-strong: rgba(255,255,255,0.14);
+    --ink: #eaf2fb;
+    --ink-dim: #8ea3bd;
+    --amber: #e8a33d;
+    --amber-dim: #6b5327;
+    --cyan: #5fd6c4;
+    --line: #2a4972;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Consolas', ui-monospace, monospace;
+    --sans: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  body.theme-light{
+    --bg: #eef1f6;
+    --bg-2: #e4e9f1;
+    --panel: #ffffff;
+    --grid: rgba(22,48,79,0.06);
+    --grid-strong: rgba(22,48,79,0.12);
+    --ink: #16304f;
+    --ink-dim: #64789a;
+    --amber: #c9820f;
+    --amber-dim: #e7c288;
+    --cyan: #0e8a76;
+    --line: #d7dfec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    color:var(--amber);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .eyebrow-left{display:flex;align-items:center;gap:10px;}
+  .eyebrow-left::before{
+    content:"";
+    width:22px;height:1px;background:var(--amber);
+  }
+  .theme-toggle{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.06em;
+    padding:6px 12px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:.15s;
+    text-transform:uppercase;
+  }
+  .theme-toggle:hover{border-color:var(--amber);color:var(--amber);}
+
+  h1{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:clamp(28px,4.4vw,42px);
+    line-height:1.08;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--ink-dim);
+    font-size:15px;
+    max-width:620px;
+    margin:0 0 30px;
+  }
+
+  .grid2{
+    display:grid;
+    grid-template-columns:360px 1fr;
+    gap:20px;
+  }
+  @media (max-width: 780px){
+    .grid2{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:22px;
+    position:relative;
+  }
+  .panel::before{
+    content: attr(data-tag);
+    position:absolute;
+    top:-1px; left:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-top:none;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.1em;
+    color:var(--ink-dim);
+    padding:2px 8px;
+    text-transform:uppercase;
+  }
+
+  #paramsPanel{}
+  #paramsPanel::-webkit-scrollbar{width:6px;}
+  #paramsPanel::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin:20px 0 8px;
+  }
+  label:first-of-type{margin-top:6px;}
+
+  .area-row{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    font-family:var(--mono);
+  }
+  .area-row input[type=number]{
+    background:transparent;
+    border:none;
+    border-bottom:1px solid var(--line);
+    color:var(--amber);
+    font-family:var(--mono);
+    font-size:32px;
+    font-weight:700;
+    width:110px;
+    padding:2px 0;
+  }
+  .area-row input[type=number]:focus{outline:none;border-color:var(--amber);}
+  .area-row span{color:var(--ink-dim);font-size:14px;}
+
+  input[type=range]{
+    width:100%;
+    margin-top:14px;
+    accent-color:var(--amber);
+  }
+
+  .seg{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .seg button{
+    background:var(--panel);
+    border:none;
+    color:var(--ink-dim);
+    font-family:var(--sans);
+    font-size:12px;
+    padding:10px 4px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .seg button:hover{color:var(--ink);}
+  .seg button.active{
+    background:var(--amber);
+    color:#1a1200;
+    font-weight:600;
+  }
+
+  .finish-list{display:flex;flex-direction:column;gap:8px;}
+  .finish-opt{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:10px 12px;
+    cursor:pointer;
+    font-size:13.5px;
+    transition:.15s;
+  }
+  .finish-opt:hover{border-color:var(--amber-dim);}
+  .finish-opt.active{
+    border-color:var(--amber);
+    background:rgba(232,163,61,0.08);
+  }
+  .finish-opt .dot{
+    width:8px;height:8px;border-radius:50%;
+    border:1px solid var(--ink-dim);
+    flex:none;
+  }
+  .finish-opt.active .dot{background:var(--amber);border-color:var(--amber);}
+  .finish-opt small{display:block;color:var(--ink-dim);font-size:11.5px;margin-top:2px;}
+
+  .section-title{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:26px 0 4px;
+    padding-top:16px;
+    border-top:1px dashed var(--line);
+  }
+  .section-title:first-of-type{margin-top:6px;padding-top:0;border-top:none;}
+
+  .cp-group-title{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin:14px 0 8px;
+  }
+  .cp-group-title:first-child{margin-top:0;}
+
+  .row3{display:flex;gap:6px;}
+  .small-btn{
+    flex:1;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:9px 4px;
+    border-radius:2px;
+    cursor:pointer;
+    text-align:center;
+    line-height:1.35;
+    transition:.15s;
+  }
+  .small-btn small{display:block;font-family:var(--sans);font-size:9px;color:var(--ink-dim);margin-top:2px;}
+  .small-btn:hover{border-color:var(--amber-dim);}
+  .small-btn.active{
+    border-color:var(--amber);
+    background:rgba(201,130,15,0.12);
+    color:var(--amber);
+  }
+  .small-btn.active small{color:var(--amber);}
+
+  select{
+    width:100%;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:13.5px;
+    padding:10px 12px;
+    border-radius:2px;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-dim) 50%), linear-gradient(135deg, var(--ink-dim) 50%, transparent 50%);
+    background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+    cursor:pointer;
+  }
+  select:focus{outline:none;border-color:var(--amber);}
+
+  .region-note{
+    font-size:11.5px;
+    color:var(--cyan);
+    margin-top:8px;
+    font-family:var(--mono);
+    display:none;
+  }
+  .region-note.show{display:block;}
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:12px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .toggle-row.active{border-color:var(--amber);background:rgba(232,163,61,0.08);}
+  .toggle-row span{font-size:13px;}
+  .toggle-row span small{display:block;color:var(--ink-dim);font-size:10.5px;margin-top:2px;font-family:var(--sans);}
+  .toggle-switch{
+    width:34px;height:19px;border-radius:10px;
+    background:var(--line);
+    position:relative;flex:none;transition:.15s;
+  }
+  .toggle-switch::after{
+    content:"";position:absolute;top:2px;left:2px;
+    width:15px;height:15px;border-radius:50%;
+    background:var(--ink-dim);transition:.15s;
+  }
+  .toggle-row.active .toggle-switch{background:var(--amber);}
+  .toggle-row.active .toggle-switch::after{left:17px;background:#1a1200;}
+
+  .tsokol-filters{display:none;margin-top:12px;}
+  .tsokol-filters.show{display:block;}
+
+  .custom-note{
+    display:none;
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .custom-note.show{display:block;}
+  .custom-note.inline{margin:6px 0 4px;}
+
+  .custom-prices{
+    display:none;
+    flex-direction:column;
+    gap:9px;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+  .custom-prices.show{display:flex;}
+  .cp-field{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .cp-field label{
+    margin:0;
+    font-family:var(--sans);
+    text-transform:none;
+    letter-spacing:0;
+    color:var(--ink);
+    font-size:12.5px;
+  }
+  .cp-inputs{display:flex;gap:5px;align-items:center;font-family:var(--mono);}
+  .cp-inputs .dash{color:var(--ink-dim);font-size:11px;}
+  .cp-inputs input[type=number]{
+    width:66px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    color:var(--amber);
+    font-family:var(--mono);
+    font-size:12px;
+    padding:6px 6px;
+    border-radius:2px;
+  }
+  .cp-inputs input[type=number]:focus{outline:none;border-color:var(--amber);}
+
+  /* Right panel: results */
+  .total-block{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:1px dashed var(--line);
+    padding-bottom:20px;
+    margin-bottom:20px;
+  }
+  .total-num{
+    font-family:var(--mono);
+    font-size:clamp(28px,4.6vw,42px);
+    font-weight:700;
+    color:var(--cyan);
+    letter-spacing:-0.01em;
+  }
+  .total-num sup{font-size:14px;color:var(--ink-dim);font-weight:400;margin-left:6px;}
+  .per-m2{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-dim);
+    text-align:right;
+  }
+  .per-m2 b{color:var(--ink);}
+
+  .dimbar{margin:26px 0 30px;}
+  .dimbar .bar{
+    display:flex;
+    height:34px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .dimbar .seg-fill{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--mono);
+    font-size:10px;
+    color:#0f2038;
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+  .dimbar .ticks{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:9px;
+    color:var(--ink-dim);
+    margin-top:4px;
+  }
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:14px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .legend i{width:9px;height:9px;display:inline-block;border-radius:1px;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    margin-top:6px;
+  }
+  th{
+    text-align:left;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    font-weight:500;
+    padding:8px 6px;
+    border-bottom:1px solid var(--line);
+  }
+  th:last-child, td:last-child{text-align:right;}
+  td{
+    padding:11px 6px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-family:var(--mono);
+  }
+  td.name{font-family:var(--sans);color:var(--ink);}
+  td.range{color:var(--ink-dim);}
+  .price-table td.range{color:#ff9800;font-weight:600;}
+
+  .tab-row{
+    display:flex;
+    gap:22px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:20px;
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:0 0 10px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:.15s;
+  }
+  .tab-btn:hover{color:var(--ink);}
+  .tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+  .advice-head{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:4px;
+  }
+  .advice-title{
+    font-family:var(--mono);
+    font-size:19px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:18px;
+  }
+  .advice-card{
+    border:1px solid var(--line);
+    border-left:2px solid var(--amber);
+    border-radius:2px;
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+  .advice-card h4{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 8px;
+  }
+  .advice-card p{
+    font-size:13px;
+    line-height:1.65;
+    color:var(--ink);
+    margin:0;
+  }
+  .advice-card.facade{border-left-color:var(--cyan);}
+  .advice-card.facade h4{color:var(--cyan);}
+  .advice-disclaimer{
+    font-size:11.5px;
+    color:var(--ink-dim);
+    line-height:1.6;
+    font-family:var(--mono);
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px dashed var(--line);
+  }
+
+  .accordion{
+    border:1px solid var(--line);
+    border-radius:2px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .accordion-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:13px 16px;
+    cursor:pointer;
+    background:var(--bg-2);
+    transition:.15s;
+  }
+  .accordion-head:hover{background:var(--line);}
+  .accordion-head .label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:.04em;
+    color:var(--ink);
+  }
+  .accordion-chevron{
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-size:11px;
+    transition:transform .2s ease;
+    flex:none;
+  }
+  .accordion.open .accordion-chevron{transform:rotate(90deg);}
+  .accordion-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .3s ease;
+  }
+  .accordion.open .accordion-body{max-height:2400px;}
+  .accordion-inner{padding:16px;}
+
+  .lock-wrap{position:relative;}
+  .lock-overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(15,32,56,0.88);
+    backdrop-filter:blur(2px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:16px;
+    border-radius:2px;
+    z-index:2;
+  }
+  body.theme-light .lock-overlay{background:rgba(238,241,246,0.92);}
+  .lock-overlay .lock-icon{font-size:22px;margin-bottom:8px;}
+  .lock-overlay .lock-title{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink);
+    margin-bottom:4px;
+    font-weight:700;
+  }
+  .lock-overlay .lock-price{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-bottom:12px;
+  }
+  .lock-unlock-btn{
+    background:#ff9800;
+    color:#1a1200;
+    border:none;
+    font-family:var(--mono);
+    font-size:11.5px;
+    font-weight:700;
+    padding:9px 18px;
+    border-radius:2px;
+    cursor:pointer;
+    letter-spacing:.03em;
+  }
+  .lock-unlock-btn:hover{background:#ffab26;}
+  .lock-demo-note{
+    font-family:var(--sans);
+    font-size:9.5px;
+    color:var(--ink-dim);
+    margin-top:8px;
+    max-width:240px;
+    line-height:1.5;
+  }
+  .lock-demo-note code{
+    background:var(--bg-2);
+    color:var(--amber);
+    padding:1px 4px;
+    border-radius:2px;
+    font-family:var(--mono);
+  }
+
+  .pay-launch-btn{
+    background:#ff9800;
+    color:#1a1200;
+    border:none;
+    font-family:var(--mono);
+    font-size:12.5px;
+    font-weight:700;
+    padding:11px 20px;
+    border-radius:2px;
+    cursor:pointer;
+    letter-spacing:.03em;
+    transition:.15s;
+  }
+  .pay-launch-btn:hover{background:#ffab26;}
+  #yookassaWidgetContainer{
+    width:100%;
+    max-width:300px;
+    min-height:0;
+  }
+  #yookassaWidgetContainer:empty{display:none;}
+  .pay-card-icons{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    font-family:var(--mono);
+    font-size:9px;
+    color:var(--ink-dim);
+    letter-spacing:.05em;
+  }
+  .lock-content.blurred{filter:blur(4px);pointer-events:none;user-select:none;}
+
+  .hidden-costs{
+    margin-top:22px;
+    border:1px dashed var(--line);
+    border-radius:2px;
+    padding:16px 18px;
+  }
+  .hidden-costs h3{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 10px;
+  }
+  .hidden-costs ul{
+    margin:0;padding-left:18px;
+    font-size:13px;
+    color:var(--ink-dim);
+    line-height:1.7;
+  }
+  .hidden-costs li b{color:var(--ink);font-weight:600;}
+
+  .foot-note{
+    margin-top:24px;
+    font-size:11.5px;
+    color:var(--ink-dim);
+    line-height:1.6;
+    font-family:var(--mono);
+  }
+</style>
+<script src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">
+    <span class="eyebrow-left">Смета · 2026</span>
+    <button class="theme-toggle" id="themeToggle">☀ Светлая</button>
+  </div>
+  <h1>Сколько будет<br/>стоить дом</h1>
+  <p class="sub">Ориентировочный расчёт по рыночным ценам на строительство на Северном Кавказе и Юге России, 2026 год. Двигайте параметры — смета пересчитывается сразу. Включите «Детальные цены», чтобы задать стоимость кирпича, цемента, блока и работы отдельно.</p>
+
+  <div class="grid2">
+
+    <!-- LEFT: inputs -->
+    <div class="panel" data-tag="Параметры" id="paramsPanel">
+
+      <div class="section-title">Габариты</div>
+      <label>Площадь дома</label>
+      <div class="area-row">
+        <input type="number" id="areaInput" value="100" min="20" max="500" />
+        <span>м²</span>
+      </div>
+      <input type="range" id="areaSlider" min="20" max="500" value="100" step="5" />
+
+      <label>Этажность</label>
+      <div class="row3" id="floorsRow"></div>
+
+      <label>Форма дома</label>
+      <div class="row3" id="shapeRow"></div>
+
+      <div class="section-title">Стены</div>
+      <label>Материал</label>
+      <div class="seg" id="materialSeg">
+        <button data-val="sip">СИП</button>
+        <button data-val="karkas">Каркас</button>
+        <button data-val="gazoblok" class="active">Газоблок</button>
+        <button data-val="kirpich">Кирпич</button>
+        <button data-val="rakushechnik">Ракушечник</button>
+        <button data-val="keramzit">Керамзитоблок</button>
+      </div>
+
+      <label>Толщина стены</label>
+      <div class="thickness-row" id="thicknessRow"></div>
+
+      <div class="section-title">Фундамент</div>
+      <label>Тип</label>
+      <div class="row3" id="foundTypeRow"></div>
+
+      <label>Глубина заложения</label>
+      <div class="row3" id="foundDepthRow"></div>
+
+      <label>Ширина ленты</label>
+      <div class="row3" id="foundWidthRow"></div>
+
+      <label>Тип пола</label>
+      <div class="row3" id="floorTypeRow"></div>
+
+      <div class="section-title">Полуподвал / цоколь</div>
+      <div class="toggle-row" id="tsokolToggle">
+        <span>Добавить цоколь<small>Отдельный уровень ниже земли</small></span>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="tsokol-filters" id="tsokolFilters">
+        <label>Высота</label>
+        <div class="row3" id="tsokolHeightRow"></div>
+        <label>Материал стен</label>
+        <div class="row3" id="tsokolMaterialRow"></div>
+        <label>Ширина стены</label>
+        <div class="row3" id="tsokolWidthRow"></div>
+      </div>
+
+      <div class="section-title">Крыша</div>
+      <div class="lock-wrap">
+        <div class="lock-content blurred" id="roofLockContent">
+          <label>Кровельный материал</label>
+          <select id="roofTypeSelect"></select>
+
+          <label>Форма крыши</label>
+          <div class="row3" id="roofShapeRow"></div>
+
+          <label>Угол ската</label>
+          <div class="row3" id="roofPitchRow"></div>
+
+          <label>Стропильная система</label>
+          <div class="row3" id="roofTrussRow"></div>
+
+          <label>Утепление кровли</label>
+          <div class="row3" id="roofInsulationRow"></div>
+
+          <label>Водосточная система</label>
+          <div class="row3" id="roofGuttersRow"></div>
+
+          <label style="margin-top:16px;">Доп. элементы</label>
+          <div class="toggle-row" id="roofExtrasToggle">
+            <span>Снегозадержатели + вентиляция конька<small>Рекомендуется в снежных горных районах</small></span>
+            <div class="toggle-switch"></div>
+          </div>
+        </div>
+        <div class="lock-overlay" id="roofLockOverlay">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-title">Расширенные фильтры крыши</div>
+          <div class="lock-price">199 ₽ / мес</div>
+          <button type="button" class="pay-launch-btn" id="payLaunchBtn">Оплатить 199 ₽</button>
+          <div class="pay-card-icons">VISA · MASTERCARD · МИР</div>
+          <div id="yookassaWidgetContainer"></div>
+          <div class="lock-demo-note" id="payStatusNote">Кнопка пока не подключена к реальному эквайрингу — контейнер и код готовы под встроенный виджет ЮKassa (Embedded Widget), карта вводится в их iframe, не в моём JS. Инструкция по подключению — в ответе ниже.</div>
+        </div>
+      </div>
+
+      <div class="section-title">Окна и фасад</div>
+      <label>Окна</label>
+      <select id="windowsSelect"></select>
+
+      <label>Количество окон</label>
+      <div class="area-row" style="gap:8px;">
+        <input type="number" id="winCountInput" value="8" min="0" max="60" style="font-size:22px;width:70px;" />
+        <span>шт</span>
+      </div>
+
+      <label>Размер окна</label>
+      <div class="row3" id="winSizeRow"></div>
+
+      <label>Дверей, шт</label>
+      <div class="cp-field" style="max-width:140px;"><div class="cp-inputs"><input type="number" id="doorCountInput" min="0" max="10"></div></div>
+
+      <label>Площадь двери, м²</label>
+      <div class="cp-field" style="max-width:140px;"><div class="cp-inputs"><input type="number" id="doorAreaInput" step="0.1" min="0.5" max="5"></div></div>
+
+      <div class="custom-note show" id="openingsNoteMain"></div>
+
+      <label>Отделка фасада</label>
+      <select id="facadeSelect"></select>
+
+      <div class="section-title">Отделка помещений</div>
+      <label>Уровень</label>
+      <div class="finish-list" id="finishList">
+        <div class="finish-opt" data-val="box">
+          <span class="dot"></span>
+          <span>Только коробка<small>Стены, перекрытия, крыша — без инженерии и отделки</small></span>
+        </div>
+        <div class="finish-opt active" data-val="rough">
+          <span class="dot"></span>
+          <span>Черновая отделка<small>+ инженерные сети, штукатурка, стяжка</small></span>
+        </div>
+        <div class="finish-opt" data-val="full">
+          <span class="dot"></span>
+          <span>Под ключ<small>+ финишные покрытия, готово для мебели</small></span>
+        </div>
+      </div>
+
+      <div class="section-title">Регион</div>
+      <label>Строительство</label>
+      <select id="regionSelect">
+        <option value="krasnodar">Краснодарский край</option>
+        <option value="stavropol">Ставропольский край</option>
+        <option value="adygea">Республика Адыгея</option>
+        <option value="dagestan">Республика Дагестан</option>
+        <option value="chechnya">Чеченская Республика</option>
+        <option value="ingushetia">Республика Ингушетия</option>
+        <option value="kbr">Кабардино-Балкарская Республика</option>
+        <option value="kchr">Карачаево-Черкесская Республика</option>
+        <option value="osetia">Северная Осетия — Алания</option>
+      </select>
+      <div class="region-note" id="regionNote">⚠ Горная местность в сейсмоопасной зоне — усиленные конструкции уже учтены в коэффициенте</div>
+
+      <div class="section-title">Детальные цены</div>
+      <div class="toggle-row" id="detailToggle">
+        <span>Свои цены: материал + работа<small>Кирпич/цемент/блок поштучно, работа отдельно</small></span>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="custom-prices" id="detailPanel">
+
+        <div class="cp-group-title">Кладка стен</div>
+        <div id="masonryFields"></div>
+        <div class="custom-note inline show" id="masonryNote"></div>
+        <div class="custom-note inline show" id="openingsNote"></div>
+
+        <div class="cp-group-title">Перекрытия и общие статьи</div>
+        <div class="cp-field"><label>Перекрытия/пояса, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpSlabsMin"><span class="dash">–</span><input type="number" id="cpSlabsMax"></div></div>
+        <div class="cp-field"><label>Фундамент, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpFoundMin"><span class="dash">–</span><input type="number" id="cpFoundMax"></div></div>
+        <div class="cp-field"><label>Крыша, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpRoofMin"><span class="dash">–</span><input type="number" id="cpRoofMax"></div></div>
+        <div class="cp-field"><label>Пол, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpFloorMin"><span class="dash">–</span><input type="number" id="cpFloorMax"></div></div>
+        <div class="cp-field"><label>Инженерка, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpEngMin"><span class="dash">–</span><input type="number" id="cpEngMax"></div></div>
+        <div class="cp-field"><label>Черновая отд., ₽/м²</label><div class="cp-inputs"><input type="number" id="cpRoughMin"><span class="dash">–</span><input type="number" id="cpRoughMax"></div></div>
+        <div class="cp-field"><label>Под ключ, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpFullMin"><span class="dash">–</span><input type="number" id="cpFullMax"></div></div>
+
+        <div class="cp-group-title">Цоколь</div>
+        <div class="cp-field"><label>Материал, ₽/м³</label><div class="cp-inputs"><input type="number" id="cpTsokolMat"></div></div>
+        <div class="cp-field"><label>Работа, ₽/м³</label><div class="cp-inputs"><input type="number" id="cpTsokolLabor"></div></div>
+        <div class="cp-field"><label>Гидроизоляция, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpWaterMin"><span class="dash">–</span><input type="number" id="cpWaterMax"></div></div>
+
+      </div>
+      <div class="custom-note" id="detailNote">Расход кирпича/клея на м² стены и объём цоколя считаются автоматически из геометрии дома (площадь → периметр → площадь кладки).</div>
+
+    </div>
+
+    <!-- RIGHT: results -->
+    <div class="panel" data-tag="Результат">
+
+      <div class="tab-row">
+        <button class="tab-btn active" id="tabSmeta">Смета</button>
+        <button class="tab-btn" id="tabAdvice">Материал и советы</button>
+      </div>
+
+      <div id="smetaView">
+
+      <div class="total-block">
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px;">Итого, ориентировочно (±7%)</div>
+          <div class="total-num" id="totalNum">— ₽<sup>диапазон</sup></div>
+        </div>
+        <div class="per-m2">цена за м²<br/><b id="perM2">—</b></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin:-6px 0 20px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);">
+        <span>⏳ Ориентировочный срок стройки:</span><b style="color:var(--ink);" id="timelineEst">—</b>
+      </div>
+
+      <div class="dimbar">
+        <div class="bar" id="dimBar"></div>
+        <div class="ticks">
+          <span>0</span>
+          <span id="tickMax"></span>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="accordion" id="pricesAccordion">
+        <div class="accordion-head" id="pricesAccordionHead">
+          <span class="label" style="color:#ff9800;"><span class="accordion-chevron" style="color:#ff9800;">▸</span> Цены на материалы и работу</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-inner">
+            <table style="margin-top:0;" class="price-table">
+              <thead>
+                <tr><th>Статья расходов</th><th>Диапазон, ₽</th></tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden-costs">
+        <h3>Что не входит в расчёт</h3>
+        <ul>
+          <li><b>Проект и разрешения</b> — 50 000–150 000 ₽</li>
+          <li><b>Подключение коммуникаций (ТУ)</b> — от 150 000 ₽, зависит от удалённости</li>
+          <li><b>Геологические изыскания</b> — 20 000–50 000 ₽</li>
+          <li><b>Благоустройство, забор, ворота</b> — считается отдельно</li>
+        </ul>
+      </div>
+
+      <div class="accordion" id="forecastAccordion">
+        <div class="accordion-head" id="forecastAccordionHead">
+          <span class="label"><span style="color:#ff9800;font-size:14px;font-weight:900;">❗</span> Прогноз цен на 3 года</span>
+          <span class="accordion-chevron">▸</span>
+        </div>
+        <div class="accordion-body">
+          <div class="accordion-inner">
+            <p style="font-size:12.5px;color:var(--ink-dim);margin:0 0 12px;line-height:1.5;">Эксперты рынка расходятся во мнениях: часть девелоперов закладывает умеренные ~5% в год (2026–2028), другие прогнозируют рост до 15% в год при дорогом финансировании (данные ТАСС, РБК, январь 2026). Показываю обе границы — это не точный прогноз, а вилка возможного удорожания.</p>
+            <table style="margin-top:0;">
+              <thead><tr><th>Год</th><th>При +5%/год</th><th>При +15%/год</th></tr></thead>
+              <tbody id="forecastBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="hidden-costs">
+        <h3>Найти бригаду в этом регионе</h3>
+        <p style="font-size:12.5px;color:var(--ink-dim);margin:0 0 12px;line-height:1.5;">Живой поиск под выбранный регион и материал стен — открывает актуальные объявления на момент клика, а не «застывший» список (он бы устарел за пару недель).</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a id="findCrewAvito" href="#" target="_blank" rel="noopener" class="theme-toggle" style="text-decoration:none;">Бригады на Avito →</a>
+          <a id="findCrewAll" href="#" target="_blank" rel="noopener" class="theme-toggle" style="text-decoration:none;">Поиск везде →</a>
+        </div>
+      </div>
+
+      <div class="foot-note">
+        <div style="color:var(--amber);margin-bottom:6px;">⏱ Цены сверены: июль 2026. Рекомендуется обновлять раз в ~2 месяца — стройматериалы могут дорожать быстрее, чем кажется. Калькулятор сам этого не сделает: напишите мне («обнови цены»), и я заново сверю их по актуальным источникам.</div>
+        Расчёт ориентировочный, на основе рыночных цен на строительство на Северном Кавказе и Юге России, 2026 г. (Краснодар, Ставрополь, Махачкала — как база сверки). В режиме «Детальные цены» кладка стен и цоколь считаются от геометрии дома (периметр, площадь кладки, объём кладки) и показаны отдельными строками «материал» и «работа». Остальные статьи (фундамент, крыша, инженерка, отделка, окна) — это готовые рыночные коэффициенты ₽/м², где материал и работа уже объединены в одну цифру у источника — разделить их отдельно нельзя, не потеряв точность. Региональные коэффициенты по республикам СКФО — оценочные (нет единой открытой статистики по каждому региону отдельно). Точную смету даёт только подрядчик после осмотра участка.
+      </div>
+
+      </div>
+
+      <div id="adviceView" style="display:none;"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================= ДАННЫЕ =======================
+
+const CREW_QUERY = {
+  sip: 'монтажники сип панелей строительство дома',
+  karkas: 'бригада каркасное строительство дома',
+  gazoblok: 'каменщики кладка газоблок бригада',
+  kirpich: 'каменщики кирпичная кладка бригада',
+  rakushechnik: 'каменщики кладка ракушечник бригада',
+  keramzit: 'каменщики кладка керамзитоблок бригада',
+};
+
+const MATERIALS = {
+  sip: {
+    label:'СИП-панели', boxBase:13000,
+    thicknesses:[
+      {mm:124, tag:'эконом', mult:0.813},
+      {mm:174, tag:'стандарт', mult:1.0},
+      {mm:224, tag:'усиленный', mult:1.187},
+    ],
+    foundation:[2000,3000], roof:[1200,2000], eng:[2500,3400],
+    roughFinish:[1400,2400], fullFinish:[3400,6000], floor:[1800,2800],
+  },
+  karkas: {
+    label:'Каркас', boxBase:15000,
+    thicknesses:[
+      {mm:100, tag:'эконом', mult:0.833},
+      {mm:150, tag:'стандарт', mult:1.0},
+      {mm:200, tag:'утеплённый', mult:1.167},
+    ],
+    foundation:[2400,3400], roof:[1400,2200], eng:[2700,3700],
+    roughFinish:[1400,2400], fullFinish:[3400,6000], floor:[1800,2800],
+  },
+  gazoblok: {
+    label:'Газоблок', boxBase:17000,
+    thicknesses:[
+      {mm:200, tag:'облегчённый', mult:0.8},
+      {mm:300, tag:'стандарт', mult:1.0},
+      {mm:400, tag:'зимний', mult:1.2},
+    ],
+    foundation:[3400,5100], roof:[1400,2600], eng:[3000,4300],
+    roughFinish:[1700,2700], fullFinish:[4300,6800], floor:[2200,3400],
+  },
+  kirpich: {
+    label:'Кирпич', boxBase:23000,
+    thicknesses:[
+      {mm:250, tag:'1 кирпич', mult:0.812},
+      {mm:380, tag:'1.5 кирпича', mult:1.0},
+      {mm:510, tag:'2 кирпича', mult:1.188},
+    ],
+    foundation:[4250,6800], roof:[1500,2900], eng:[3400,5100],
+    roughFinish:[2000,3400], fullFinish:[5100,8500], floor:[2500,4000],
+  },
+  rakushechnik: {
+    label:'Ракушечник', boxBase:15000,
+    thicknesses:[
+      {mm:200, tag:'лёгкий', mult:0.83},
+      {mm:300, tag:'стандарт', mult:1.0},
+      {mm:400, tag:'зимний', mult:1.18},
+    ],
+    foundation:[3000,4500], roof:[1300,2400], eng:[2800,4000],
+    roughFinish:[1600,2500], fullFinish:[4000,6500], floor:[2200,3400],
+  },
+  keramzit: {
+    label:'Керамзитоблок', boxBase:16000,
+    thicknesses:[
+      {mm:200, tag:'лёгкий', mult:0.83},
+      {mm:300, tag:'стандарт', mult:1.0},
+      {mm:400, tag:'зимний', mult:1.18},
+    ],
+    foundation:[3800,5600], roof:[1500,2700], eng:[3200,4600],
+    roughFinish:[1800,2900], fullFinish:[4600,7300], floor:[2400,3700],
+  },
+};
+
+const MATERIAL_TYPES = {
+  sip:'panel', karkas:'panel', gazoblok:'block', kirpich:'brick',
+  rakushechnik:'block', keramzit:'block',
+};
+
+const REGIONS = {
+  krasnodar:  { label:'Краснодарский край',                mult:1.00 },
+  stavropol:  { label:'Ставропольский край',               mult:0.93 },
+  adygea:     { label:'Республика Адыгея',                 mult:0.92 },
+  dagestan:   { label:'Республика Дагестан',                mult:0.90, seismic:true },
+  chechnya:   { label:'Чеченская Республика',               mult:0.88, seismic:true },
+  ingushetia: { label:'Республика Ингушетия',               mult:0.87, seismic:true },
+  kbr:        { label:'Кабардино-Балкарская Республика',    mult:0.87 },
+  kchr:       { label:'Карачаево-Черкесская Республика',    mult:0.86 },
+  osetia:     { label:'Северная Осетия — Алания',           mult:0.88 },
+};
+
+// footprint — доля площади застройки от общей площади дома; levels — число "стеновых ярусов" для геометрии кладки
+const FLOOR_TYPE = [
+  { label:'По грунту', tag:'бетонная стяжка', mult:0.85 },
+  { label:'По лагам', tag:'дерево + утеплитель', mult:1.0 },
+  { label:'По плите', tag:'ж/б перекрытие', mult:1.3 },
+];
+
+const HOUSE_SHAPE = [
+  { label:'Прямоугольник', tag:'мин. расход материала', perimeterMult:1.00 },
+  { label:'Г-образный / с эркером', tag:'+10–15% периметра', perimeterMult:1.13 },
+  { label:'Сложная форма', tag:'+20–25% периметра', perimeterMult:1.22 },
+];
+
+const FLOORS = [
+  { label:'1 этаж',        tag:'',                  footprint:1.00, boxExtra:1.00, levels:1.0 },
+  { label:'1 + мансарда',  tag:'мансардная крыша', footprint:0.65, boxExtra:1.05, levels:1.6 },
+  { label:'2 этажа',       tag:'+ лестница',        footprint:0.52, boxExtra:1.08, levels:2.0 },
+  { label:'3 этажа',       tag:'+ лестница',        footprint:0.36, boxExtra:1.12, levels:3.0 },
+];
+
+const FOUND_TYPE = [
+  { label:'Свайно-рост.', tag:'лёгкие дома',   mult:0.70 },
+  { label:'Ленточный',    tag:'стандарт',      mult:1.00 },
+  { label:'Плита',        tag:'сложный грунт', mult:1.40 },
+];
+const FOUND_DEPTH = [
+  { label:'0.5–0.7 м', tag:'мелкозаглубл.', mult:0.75 },
+  { label:'1.2–1.6 м', tag:'стандарт',      mult:1.00 },
+  { label:'1.8–2.2 м', tag:'глубокий',      mult:1.40 },
+];
+const FOUND_WIDTH = [
+  { label:'300 мм', tag:'узкий',      mult:0.85 },
+  { label:'400 мм', tag:'стандарт',   mult:1.00 },
+  { label:'600 мм', tag:'широкий',    mult:1.20 },
+];
+
+const TSOKOL_HEIGHT = [
+  { label:'1.2–1.5 м', tag:'низкий',       h:1.35 },
+  { label:'1.8–2.2 м', tag:'стандарт',     h:2.00 },
+  { label:'2.4–2.7 м', tag:'полный этаж',  h:2.55 },
+];
+const TSOKOL_WIDTH = [
+  { label:'300 мм', tag:'лёгкий',    w:0.30 },
+  { label:'400 мм', tag:'стандарт',  w:0.40 },
+  { label:'500 мм', tag:'усиленный', w:0.50 },
+];
+const TSOKOL_MATERIAL = [
+  { label:'Блок ФБС',      tag:'быстрее',  pricePerM3:[8000,11000] },
+  { label:'Монолит-бетон', tag:'прочнее',  pricePerM3:[12000,16000] },
+  { label:'Кирпич',        tag:'дороже',   pricePerM3:[14000,18000] },
+];
+
+const WINDOWS = [
+  { label:'Эконом · однокамерный ПВХ', range:[1000,1500] },
+  { label:'Стандарт · двухкамерный', range:[1500,2200] },
+  { label:'Энергоэффективные · трёхкамерный', range:[2200,3000] },
+  { label:'Панорамные · увеличенное остекление', range:[3400,5000] },
+];
+
+const ROOF_TYPE = [
+  { label:'Профнастил / шифер', tag:'эконом, простые скаты', range:[2500,3800] },
+  { label:'Металлочерепица', tag:'стандарт, 52% рынка', range:[3500,5000] },
+  { label:'Мягкая (битумная) черепица', tag:'сложные формы крыши', range:[5000,7000] },
+  { label:'Фальцевая крыша', tag:'премиум, до 100 лет службы', range:[7000,11000] },
+];
+
+const ROOF_SHAPE = [
+  { label:'Одно-/двускатная', tag:'мин. расход материала', mult:1.00 },
+  { label:'Вальмовая (4 ската)', tag:'+15% сложности', mult:1.15 },
+  { label:'Сложная мансардная', tag:'+30% сложности', mult:1.30 },
+];
+
+const ROOF_PITCH = [
+  { label:'Пологий', tag:'15–20°', mult:0.92 },
+  { label:'Стандартный', tag:'30–35°', mult:1.00 },
+  { label:'Крутой', tag:'45°+, для снега', mult:1.15 },
+];
+
+const ROOF_TRUSS = [
+  { label:'Стандартная', tag:'обычная снеговая нагрузка', mult:1.00 },
+  { label:'Усиленная', tag:'горные районы, много снега', mult:1.20 },
+];
+
+const ROOF_INSULATION = [
+  { label:'Без утепления', tag:'холодный чердак', range:[0,0] },
+  { label:'Базовое', tag:'100–150 мм', range:[800,1400] },
+  { label:'Усиленное', tag:'мансарда, 200мм+', range:[1500,2500] },
+];
+
+const ROOF_GUTTERS = [
+  { label:'Без водостока', tag:'', range:[0,0] },
+  { label:'Эконом ПВХ', tag:'', range:[400,700] },
+  { label:'Премиум металл', tag:'', range:[900,1500] },
+];
+
+const FACADE = [
+  { label:'Без отделки фасада', range:[0,0] },
+  { label:'Минеральная штукатурка', range:[2000,3000] },
+  { label:'Декоративная («короед»)', range:[2800,4200] },
+  { label:'Вентфасад / сайдинг', range:[4500,7500] },
+  { label:'Клинкер / облицовочный кирпич', range:[6000,10000] },
+];
+
+const MATERIAL_ADVICE = {
+  gazoblok: {
+    thermal: 'Один из лучших утеплителей среди штучных стеновых материалов — пористая структура блока даёт низкую теплопроводность (λ≈0.12–0.14 Вт/м·°C у D500). При толщине 300–400 мм стена обычно не требует дополнительного утепления даже зимой в предгорьях.',
+    climate: 'Хорошо работает и на жару, и на холод: летом медленно нагревается, зимой медленно остывает. Слабое место — влага: газоблок пористый и без защиты фасада впитывает воду, а во влажном климате Черноморского побережья это грозит разрушением при циклах заморозки-оттепели. Отделка фасада или вентзазор обязательны.',
+    notes: 'Хрупкий при неравномерной усадке фундамента — не экономьте на нём. Обычный дюбель в газоблоке держит плохо, нужен специальный крепёж для полок и техники.',
+  },
+  kirpich: {
+    thermal: 'Самый плотный и тяжёлый из вариантов — теплопроводность высокая (λ≈0.5–0.7 Вт/м·°C), сам по себе кирпич плохо держит тепло. Кладка в 1.5–2 кирпича греет заметно хуже, чем такая же по толщине стена из газоблока. Для холодных зим в горах (Дагестан, КБР) обычно нужен дополнительный утеплитель.',
+    climate: 'Зато у кирпича большая тепловая масса — стена медленно нагревается и медленно остывает, что хорошо сглаживает суточные перепады в континентальном климате (Ставрополье): днём в доме прохладно, ночью тепло не уходит быстро. Хорошо переносит влажный морской воздух Краснодарского побережья и циклы замерзания-оттаивания.',
+    notes: 'Самый долговечный вариант, десятилетиями не требует ухода. Если нужны и прочность, и тепло — строят колодцевую кладку (кирпич + утеплитель + облицовка) или добавляют вентфасад с утеплителем.',
+  },
+  rakushechnik: {
+    thermal: 'Пористый природный камень, теплопроводность зависит от марки: рыхлый М15 держит тепло заметно лучше плотного М35 (ориентировочно λ 0.2–0.4 Вт/м·°C) — среднее между газоблоком и кирпичом.',
+    climate: 'Исторически материал тёплого прибрежного климата (Дагестан, Крым): хорошо держит прохладу летом, «дышит» за счёт пористости, не даёт сырости скапливаться в стене. В горных и континентальных районах с холодными зимами (высокогорье, Ставрополье) обычно нужен дополнительный утеплитель изнутри или снаружи.',
+    notes: 'Камень мягкий, легко режется, но менее прочен на точечные нагрузки, чем кирпич. Нужна паропроницаемая отделка фасада — «глухая» плёнкообразующая штукатурка не даст камню отдавать влагу наружу.',
+  },
+  keramzit: {
+    thermal: 'Среднее значение: теплопроводность выше, чем у газоблока, но ниже, чем у полнотелого кирпича (λ≈0.3–0.45 Вт/м·°C в зависимости от плотности). При 300–400 мм для действительно холодных зим обычно нужен дополнительный слой утеплителя.',
+    climate: 'Неплохо ведёт себя и в жару, и в холод за счёт сочетания пористости и тепловой массы. Хорошо переносит влажность — впитывает воду заметно меньше, чем газобетон, поэтому неплохой выбор для влажного побережья.',
+    notes: 'Тяжелее газоблока — выше нагрузка на фундамент. Поверхность менее ровная, штукатурить сложнее и дороже, чем газоблок.',
+  },
+  sip: {
+    thermal: 'Лучший показатель по утеплению среди всех вариантов — пенополистирольный сердечник (обычно 124–224 мм) по сопротивлению теплопередаче сравним с кирпичной стеной толщиной 1.5–2 метра. Дом быстро прогревается и хорошо держит тепло.',
+    climate: 'Отлично подходит для холодных горных зим — минимальные теплопотери. В жару может перегреваться из-за низкой тепловой массы (стена не накапливает прохладу) — на равнине летом нужна хорошая вентиляция и защита от прямого солнца.',
+    notes: 'Панели горючи без обработки — важна качественная противопожарная защита (антипирены, соблюдение норм). Низкая паропроницаемость требует принудительной вентиляции, иначе в доме будет копиться влажность.',
+  },
+  karkas: {
+    thermal: 'Зависит целиком от утеплителя внутри каркаса (обычно минвата 100–200 мм) — при качественном утеплении показатели близки к СИП. Дом быстро прогревается зимой.',
+    climate: 'Как и СИП, слабая тепловая масса — в сильную жару в доме быстро становится жарко без кондиционирования, зато зимой он быстро протапливается. Хороший выбор для горных районов с холодными зимами; во влажном климате побережья важна пароизоляция, чтобы утеплитель не намокал.',
+    notes: 'Самый лёгкий вариант — минимальная нагрузка на фундамент, можно строить на облегчённом основании. Формально каркасные дома сейсмостойки, но качество узлов и крепежа критично важно.',
+  },
+};
+
+const FACADE_ADVICE = {
+  1: 'Паропроницаемая отделка — хорошо подходит для «дышащих» стен из газоблока и ракушечника, не запирает влагу внутри кладки. Менее устойчива к трещинам при усадке, чем акриловые составы. Бюджетный вариант, особенно уместный в сухом континентальном климате (Ставрополье).',
+  2: 'Тоже паропроницаема, если состав минеральный или силикатный (не акриловый) — плюс текстура скрывает мелкие неровности кладки. В акриловом исполнении хуже пропускает пар, для газоблока и ракушечника лучше выбирать минеральную/силикатную основу.',
+  3: 'Лучший вариант для влажного климата Черноморского побережья — вентиляционный зазор выводит влагу наружу и не даёт стене сыреть независимо от материала кладки. В зазор можно дополнительно заложить утеплитель — особенно полезно для кирпича и керамзитоблока.',
+  4: 'Самый долговечный и морозостойкий вариант, хорошо переносит перепады температур в горной местности. Обычно тоже монтируется с вентзазором — «наглухо» без зазора стена под облицовкой может сыреть, особенно если под ней газоблок или ракушечник.',
+};
+
+
+const WINDOW_SIZES = [
+  { label:'Маленькое', tag:'0.6×1.2 м', area:0.9 },
+  { label:'Стандартное', tag:'1.3×1.4 м', area:1.5 },
+  { label:'Большое', tag:'1.8×1.5 м', area:2.2 },
+  { label:'Панорамное', tag:'от 3 м²', area:3.5 },
+];
+
+const COLORS = {
+  foundation:'#5fd6c4', box:'#e8a33d', boxLabor:'#f6c177', slabs:'#c98be0', roof:'#a37bd8',
+  windows:'#8bd17c', eng:'#6fa8dc', finish:'#e06666', facade:'#f2b6c6',
+  tsokol:'#f6d34c', tsokolLabor:'#fbe38a', waterproof:'#f2e28a', floor:'#7fb3d5',
+};
+
+// ======================= СОСТОЯНИЕ =======================
+
+let state = {
+  area:100, material:'gazoblok', thickness:1, finish:'rough', region:'krasnodar',
+  floors:0, foundType:1, foundDepth:1, foundWidth:1, shape:0, floorType:1,
+  windows:1, facade:1, roofType:1, roofShape:0, roofPitch:1, roofTruss:0, roofInsulation:0, roofGutters:0, roofExtras:false, roofUnlocked:false,
+  tsokol:{ enabled:false, height:1, material:0, width:1 },
+  openings:{ windowsCount:8, windowSize:1, doorsCount:1, doorArea:1.9 },
+  detailMode:false, detail:null,
+  activeTab:'smeta',
+};
+
+let lastMasonryMaterial = null;
+
+function initDetailDefaults(){
+  const m = MATERIALS[state.material];
+  state.detail = {
+    foundation:[...m.foundation], roof:[...ROOF_TYPE[state.roofType].range], eng:[...m.eng],
+    roughFinish:[...m.roughFinish], fullFinish:[...m.fullFinish], floor:[...m.floor],
+    slabs:[6000,7600],
+    kirpichPrice:15, cementPrice:350, kladkaLaborM3:5500,
+    block: {
+      gazoblok:      { m3:5000, bag:300, laborM3:3000 },
+      rakushechnik:  { m3:2200, bag:350, laborM3:4000 },
+      keramzit:      { m3:3200, bag:320, laborM3:3200 },
+    },
+    sipMaterial:13000, sipLabor:2500,
+    karkasMaterial:11000, karkasLabor:4000,
+    tsokolMaterial:9000, tsokolLabor:3000, waterproof:[3000,5000],
+  };
+}
+
+// ======================= ГЕОМЕТРИЯ =======================
+
+function bricksPerM2(mm){ return Math.round(mm/125*102); }
+function cementBagsPerM2(mm){ return +(0.4*(mm/380)).toFixed(2); }
+function glueBagsPerM2(mm){ return +(0.2*(mm/300)).toFixed(2); }
+
+function wallGeometry(){
+  const fl = FLOORS[state.floors];
+  const footprintArea = Math.max(state.area * fl.footprint, 1);
+  const perimeter = 4*Math.sqrt(footprintArea) * HOUSE_SHAPE[state.shape].perimeterMult;
+  const grossWallArea = perimeter * 3.0 * fl.levels; // высота яруса 3м
+
+  const o = state.openings;
+  const winArea = WINDOW_SIZES[o.windowSize].area;
+  const openingsArea = o.windowsCount*winArea + o.doorsCount*o.doorArea;
+  // защита от абсурдных значений — проёмы не съедают больше половины стены
+  const netWallArea = Math.max(grossWallArea - openingsArea, grossWallArea*0.5);
+
+  return { footprintArea, perimeter, grossWallArea, openingsArea, netWallArea };
+}
+
+function defaultWindowsCount(){
+  return Math.max(3, Math.round(state.area/12));
+}
+function defaultDoorsCount(){
+  return FLOORS[state.floors].levels >= 2 ? 2 : 1;
+}
+
+function estimateTimeline(){
+  // базовые месяцы на коробку по технологии + масштаб по площади и этажности
+  const base = { sip:2.5, karkas:3, gazoblok:4, rakushechnik:4.5, keramzit:4.5, kirpich:6 };
+  let months = base[state.material] || 4;
+  months *= (0.7 + state.area/250); // масштаб по площади (100м² ≈ ×1.1)
+  months *= (1 + (FLOORS[state.floors].levels-1)*0.15); // доп. время на этажность
+  if(state.finish === 'rough') months += months*0.35;
+  if(state.finish === 'full') months += months*0.7;
+  if(state.tsokol.enabled) months += 1;
+  const minM = Math.max(1.5, Math.round(months*0.85*10)/10);
+  const maxM = Math.round(months*1.2*10)/10;
+  return { minM, maxM };
+}
+
+function fmt(n){ return Math.round(n).toLocaleString('ru-RU'); }
+
+// ======================= РАСЧЁТ =======================
+
+function computeLineItems(){
+  const m = MATERIALS[state.material];
+  const area = state.area;
+  const regionMult = REGIONS[state.region].mult;
+  const thicknessMult = m.thicknesses[state.thickness].mult;
+  const thicknessMm = m.thicknesses[state.thickness].mm;
+  const fl = FLOORS[state.floors];
+  const foundMult = FOUND_TYPE[state.foundType].mult * FOUND_DEPTH[state.foundDepth].mult * FOUND_WIDTH[state.foundWidth].mult;
+  const geo = wallGeometry();
+  const d = (state.detailMode && state.detail) ? state.detail : null;
+
+  const foundationRange = d ? d.foundation : m.foundation;
+  const roofRange = d ? d.roof : ROOF_TYPE[state.roofType].range;
+  const engRange = d ? d.eng : m.eng;
+  const roughRange = d ? d.roughFinish : m.roughFinish;
+  const fullRange = d ? d.fullFinish : m.fullFinish;
+
+  const items = [
+    { key:'foundation', name:'Фундамент', range:foundationRange, mult: fl.footprint * foundMult * regionMult * HOUSE_SHAPE[state.shape].perimeterMult },
+  ];
+
+  // стены
+  if(d){
+    let matPerM2Wall, laborPerM2Wall;
+    if(state.material==='kirpich'){
+      const bricks = bricksPerM2(thicknessMm), bags = cementBagsPerM2(thicknessMm);
+      matPerM2Wall = bricks*d.kirpichPrice + bags*d.cementPrice;
+      laborPerM2Wall = d.kladkaLaborM3 * (thicknessMm/1000);
+    } else if(MATERIAL_TYPES[state.material]==='block'){
+      const bd = d.block[state.material];
+      const bags = glueBagsPerM2(thicknessMm);
+      matPerM2Wall = (thicknessMm/1000)*bd.m3 + bags*bd.bag;
+      laborPerM2Wall = bd.laborM3 * (thicknessMm/1000);
+    } else if(state.material==='sip'){
+      matPerM2Wall = d.sipMaterial * thicknessMult;
+      laborPerM2Wall = d.sipLabor;
+    } else {
+      matPerM2Wall = d.karkasMaterial * thicknessMult;
+      laborPerM2Wall = d.karkasLabor;
+    }
+    const wallRatio = geo.netWallArea/area;
+    const matPerM2Doma = matPerM2Wall * wallRatio;
+    const laborPerM2Doma = laborPerM2Wall * wallRatio;
+    items.push({ key:'box', name:`Кладка стен (${thicknessMm} мм) — материал`, range:[matPerM2Doma,matPerM2Doma], mult: fl.boxExtra * regionMult });
+    items.push({ key:'boxLabor', name:`Кладка стен (${thicknessMm} мм) — работа`, range:[laborPerM2Doma,laborPerM2Doma], mult: fl.boxExtra * regionMult });
+    items.push({ key:'slabs', name:'Перекрытия и монолитные пояса', range: d.slabs, mult: regionMult });
+  } else {
+    items.push({ key:'box', name:`Коробка (${thicknessMm} мм, ${fl.label.toLowerCase()})`, range:[m.boxBase,m.boxBase], mult: thicknessMult*fl.boxExtra*regionMult*HOUSE_SHAPE[state.shape].perimeterMult });
+  }
+
+  const roofMult = fl.footprint*regionMult*HOUSE_SHAPE[state.shape].perimeterMult
+    * ROOF_SHAPE[state.roofShape].mult * ROOF_PITCH[state.roofPitch].mult * ROOF_TRUSS[state.roofTruss].mult;
+  items.push({ key:'roof', name:`Крыша (${ROOF_TYPE[state.roofType].label}, ${ROOF_SHAPE[state.roofShape].label.toLowerCase()})`, range:roofRange, mult: roofMult });
+  if(ROOF_INSULATION[state.roofInsulation].range[1] > 0){
+    items.push({ key:'roof', name:'Утепление кровли — ' + ROOF_INSULATION[state.roofInsulation].label, range: ROOF_INSULATION[state.roofInsulation].range, mult: fl.footprint*regionMult*HOUSE_SHAPE[state.shape].perimeterMult });
+  }
+  if(ROOF_GUTTERS[state.roofGutters].range[1] > 0){
+    items.push({ key:'roof', name:'Водосточная система — ' + ROOF_GUTTERS[state.roofGutters].label, range: ROOF_GUTTERS[state.roofGutters].range, mult: regionMult });
+  }
+  if(state.roofExtras){
+    items.push({ key:'roof', name:'Снегозадержатели + вентиляция конька', range: [300,600], mult: regionMult });
+  }
+  items.push({ key:'floor', name:`Пол (${FLOOR_TYPE[state.floorType].label.toLowerCase()})`, range: (d?d.floor:m.floor), mult: regionMult*FLOOR_TYPE[state.floorType].mult });
+  items.push({ key:'windows', name:'Окна', range:WINDOWS[state.windows].range, mult:regionMult });
+
+  // цоколь
+  if(state.tsokol.enabled){
+    const th = TSOKOL_HEIGHT[state.tsokol.height], tw = TSOKOL_WIDTH[state.tsokol.width], tm = TSOKOL_MATERIAL[state.tsokol.material];
+    const volume = geo.perimeter * th.h * tw.w;
+    if(d){
+      items.push({
+        key:'tsokol', name:`Цоколь (${tm.label}, ${tw.label}) — материал`, _abs:true,
+        min: volume*d.tsokolMaterial*regionMult, max: volume*d.tsokolMaterial*regionMult,
+      });
+      items.push({
+        key:'tsokolLabor', name:`Цоколь (${tm.label}, ${tw.label}) — работа`, _abs:true,
+        min: volume*d.tsokolLabor*regionMult, max: volume*d.tsokolLabor*regionMult,
+      });
+    } else {
+      items.push({
+        key:'tsokol', name:`Цоколь (${tm.label}, ${tw.label})`, _abs:true,
+        min: volume*tm.pricePerM3[0]*regionMult, max: volume*tm.pricePerM3[1]*regionMult,
+      });
+    }
+    const wpRange = d ? d.waterproof : [3000,5000];
+    const wallArea = geo.perimeter*th.h;
+    items.push({
+      key:'waterproof', name:'Гидроизоляция цоколя', _abs:true,
+      min: wallArea*wpRange[0]*regionMult, max: wallArea*wpRange[1]*regionMult,
+    });
+  }
+
+  if(state.finish !== 'box'){
+    items.push({ key:'eng', name:'Инженерные сети', range:engRange, mult:regionMult });
+    const finishRange = state.finish === 'full' ? fullRange : roughRange;
+    items.push({ key:'finish', name: state.finish === 'full' ? 'Отделка помещений под ключ' : 'Черновая отделка помещений', range: finishRange, mult:regionMult });
+  }
+  if(FACADE[state.facade].range[1] > 0){
+    items.push({ key:'facade', name:'Отделка фасада — ' + FACADE[state.facade].label.split(' ·')[0], range: FACADE[state.facade].range, mult:regionMult });
+  }
+
+  return items.map(it => it._abs ? it : ({ ...it, min: it.range[0]*it.mult*area, max: it.range[1]*it.mult*area }));
+}
+
+// ======================= РЕНДЕР ФОРМЫ =======================
+
+function renderThicknessButtons(){
+  const m = MATERIALS[state.material];
+  const row = document.getElementById('thicknessRow');
+  row.innerHTML = m.thicknesses.map((t,i)=>`
+    <div class="thick-btn small-btn ${i===state.thickness?'active':''}" data-idx="${i}">
+      ${t.mm} мм<small>${t.tag}</small>
+    </div>
+  `).join('');
+}
+
+function renderRow3(containerId, options, applyFn, activeIdx){
+  const row = document.getElementById(containerId);
+  row.innerHTML = options.map((o,i)=>`
+    <div class="small-btn ${i===activeIdx?'active':''}" data-idx="${i}">
+      ${o.label}<small>${o.tag}</small>
+    </div>
+  `).join('');
+  row.onclick = (e)=>{
+    const btn = e.target.closest('.small-btn');
+    if(!btn) return;
+    applyFn(parseInt(btn.dataset.idx));
+    render();
+  };
+}
+
+function renderSelect(selectId, options, currentIdx, onChange){
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = options.map((o,i)=>`<option value="${i}">${o.label}</option>`).join('');
+  sel.value = currentIdx;
+  sel.onchange = (e)=>{ onChange(parseInt(e.target.value)); render(); };
+}
+
+function masonryFieldsHTML(){
+  if(state.material === 'kirpich'){
+    return `
+      <div class="cp-field"><label>Кирпич, ₽/шт</label><div class="cp-inputs"><input type="number" id="cpKirpichPrice"></div></div>
+      <div class="cp-field"><label>Цемент, ₽/мешок 50кг</label><div class="cp-inputs"><input type="number" id="cpCementPrice"></div></div>
+      <div class="cp-field"><label>Работа кладки, ₽/м³</label><div class="cp-inputs"><input type="number" id="cpKladkaLabor"></div></div>
+    `;
+  }
+  if(MATERIAL_TYPES[state.material] === 'block'){
+    const label = MATERIALS[state.material].label;
+    return `
+      <div class="cp-field"><label>${label}, ₽/м³</label><div class="cp-inputs"><input type="number" id="cpBlockM3"></div></div>
+      <div class="cp-field"><label>Раствор/клей, ₽/мешок</label><div class="cp-inputs"><input type="number" id="cpBlockBag"></div></div>
+      <div class="cp-field"><label>Работа кладки, ₽/м³</label><div class="cp-inputs"><input type="number" id="cpBlockLabor"></div></div>
+    `;
+  }
+  if(state.material === 'sip'){
+    return `
+      <div class="cp-field"><label>Панель, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpSipMaterial"></div></div>
+      <div class="cp-field"><label>Монтаж, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpSipLabor"></div></div>
+    `;
+  }
+  return `
+    <div class="cp-field"><label>Материал, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpKarkasMaterial"></div></div>
+    <div class="cp-field"><label>Работа, ₽/м²</label><div class="cp-inputs"><input type="number" id="cpKarkasLabor"></div></div>
+  `;
+}
+
+function bindMasonryInputs(){
+  const d = state.detail;
+  const on = (id, get, set)=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = get();
+    el.addEventListener('input', e=>{ set(parseFloat(e.target.value)||0); refreshOutputs(); });
+  };
+  if(state.material === 'kirpich'){
+    on('cpKirpichPrice', ()=>d.kirpichPrice, v=>d.kirpichPrice=v);
+    on('cpCementPrice', ()=>d.cementPrice, v=>d.cementPrice=v);
+    on('cpKladkaLabor', ()=>d.kladkaLaborM3, v=>d.kladkaLaborM3=v);
+  } else if(MATERIAL_TYPES[state.material] === 'block'){
+    const bd = d.block[state.material];
+    on('cpBlockM3', ()=>bd.m3, v=>bd.m3=v);
+    on('cpBlockBag', ()=>bd.bag, v=>bd.bag=v);
+    on('cpBlockLabor', ()=>bd.laborM3, v=>bd.laborM3=v);
+  } else if(state.material === 'sip'){
+    on('cpSipMaterial', ()=>d.sipMaterial, v=>d.sipMaterial=v);
+    on('cpSipLabor', ()=>d.sipLabor, v=>d.sipLabor=v);
+  } else {
+    on('cpKarkasMaterial', ()=>d.karkasMaterial, v=>d.karkasMaterial=v);
+    on('cpKarkasLabor', ()=>d.karkasLabor, v=>d.karkasLabor=v);
+  }
+}
+
+function updateMasonryNote(){
+  const m = MATERIALS[state.material];
+  const mm = m.thicknesses[state.thickness].mm;
+  let txt = '';
+  if(state.material === 'kirpich'){
+    txt = `Расход при ${mm} мм: ${bricksPerM2(mm)} шт/м² стены, ${cementBagsPerM2(mm)} мешка цемента/м². Работа считается как ₽/м³ × толщину стены.`;
+  } else if(MATERIAL_TYPES[state.material] === 'block'){
+    txt = `Расход при ${mm} мм: ${(mm/1000).toFixed(2)} м³ материала/м² стены, ${glueBagsPerM2(mm)} мешка раствора/клея/м². Работа считается как ₽/м³ × толщину стены.`;
+  } else {
+    txt = `Площадь кладки считается от периметра дома и высоты этажей.`;
+  }
+  document.getElementById('masonryNote').textContent = txt;
+}
+
+function ensureMasonryFields(){
+  if(lastMasonryMaterial !== state.material){
+    lastMasonryMaterial = state.material;
+    document.getElementById('masonryFields').innerHTML = masonryFieldsHTML();
+    bindMasonryInputs();
+  }
+  updateMasonryNote();
+}
+
+function bindSimpleDetailInputs(){
+  const d = state.detail;
+  const on = (id, get, set)=>{
+    const el = document.getElementById(id);
+    el.value = get();
+    el.addEventListener('input', e=>{ set(parseFloat(e.target.value)||0); refreshOutputs(); });
+  };
+  on('cpSlabsMin', ()=>d.slabs[0], v=>d.slabs[0]=v);
+  on('cpSlabsMax', ()=>d.slabs[1], v=>d.slabs[1]=v);
+  on('cpFoundMin', ()=>d.foundation[0], v=>d.foundation[0]=v);
+  on('cpFoundMax', ()=>d.foundation[1], v=>d.foundation[1]=v);
+  on('cpRoofMin', ()=>d.roof[0], v=>d.roof[0]=v);
+  on('cpRoofMax', ()=>d.roof[1], v=>d.roof[1]=v);
+  on('cpFloorMin', ()=>d.floor[0], v=>d.floor[0]=v);
+  on('cpFloorMax', ()=>d.floor[1], v=>d.floor[1]=v);
+  on('cpEngMin', ()=>d.eng[0], v=>d.eng[0]=v);
+  on('cpEngMax', ()=>d.eng[1], v=>d.eng[1]=v);
+  on('cpRoughMin', ()=>d.roughFinish[0], v=>d.roughFinish[0]=v);
+  on('cpRoughMax', ()=>d.roughFinish[1], v=>d.roughFinish[1]=v);
+  on('cpFullMin', ()=>d.fullFinish[0], v=>d.fullFinish[0]=v);
+  on('cpFullMax', ()=>d.fullFinish[1], v=>d.fullFinish[1]=v);
+  on('cpTsokolMat', ()=>d.tsokolMaterial, v=>d.tsokolMaterial=v);
+  on('cpTsokolLabor', ()=>d.tsokolLabor, v=>d.tsokolLabor=v);
+  on('cpWaterMin', ()=>d.waterproof[0], v=>d.waterproof[0]=v);
+  on('cpWaterMax', ()=>d.waterproof[1], v=>d.waterproof[1]=v);
+}
+
+function updateOpeningsNote(){
+  const geo = wallGeometry();
+  const txt = `Проёмы: ${fmt(geo.openingsArea)} м² из ${fmt(geo.grossWallArea)} м² стен (используется для расчёта кладки в детальном режиме)`;
+  const mainEl = document.getElementById('openingsNoteMain');
+  if(mainEl) mainEl.textContent = txt;
+  const detailEl = document.getElementById('openingsNote');
+  if(detailEl) detailEl.textContent = `Площадь кладки: ${fmt(geo.netWallArea)} м² (стены минус проёмы — настраиваются в разделе «Окна и фасад»)`;
+}
+
+let simpleDetailBound = false;
+
+function render(){
+  document.getElementById('areaInput').value = state.area;
+  document.getElementById('areaSlider').value = state.area;
+
+  document.querySelectorAll('#materialSeg button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.val === state.material);
+  });
+  document.querySelectorAll('.finish-opt').forEach(el=>{
+    el.classList.toggle('active', el.dataset.val === state.finish);
+  });
+
+  renderThicknessButtons();
+  renderRow3('floorsRow', FLOORS, v=>state.floors=v, state.floors);
+  renderRow3('shapeRow', HOUSE_SHAPE, v=>state.shape=v, state.shape);
+  renderRow3('foundTypeRow', FOUND_TYPE, v=>state.foundType=v, state.foundType);
+  renderRow3('foundDepthRow', FOUND_DEPTH, v=>state.foundDepth=v, state.foundDepth);
+  renderRow3('foundWidthRow', FOUND_WIDTH, v=>state.foundWidth=v, state.foundWidth);
+  renderRow3('floorTypeRow', FLOOR_TYPE, v=>state.floorType=v, state.floorType);
+  renderSelect('roofTypeSelect', ROOF_TYPE, state.roofType, v=>state.roofType=v);
+  renderRow3('roofShapeRow', ROOF_SHAPE, v=>state.roofShape=v, state.roofShape);
+  renderRow3('roofPitchRow', ROOF_PITCH, v=>state.roofPitch=v, state.roofPitch);
+  renderRow3('roofTrussRow', ROOF_TRUSS, v=>state.roofTruss=v, state.roofTruss);
+  renderRow3('roofInsulationRow', ROOF_INSULATION, v=>state.roofInsulation=v, state.roofInsulation);
+  renderRow3('roofGuttersRow', ROOF_GUTTERS, v=>state.roofGutters=v, state.roofGutters);
+  document.getElementById('roofExtrasToggle').classList.toggle('active', state.roofExtras);
+  document.getElementById('roofLockContent').classList.toggle('blurred', !state.roofUnlocked);
+  document.getElementById('roofLockOverlay').style.display = state.roofUnlocked ? 'none' : 'flex';
+
+  renderSelect('windowsSelect', WINDOWS, state.windows, v=>state.windows=v);
+  renderRow3('winSizeRow', WINDOW_SIZES, v=>state.openings.windowSize=v, state.openings.windowSize);
+  document.getElementById('winCountInput').value = state.openings.windowsCount;
+  document.getElementById('doorCountInput').value = state.openings.doorsCount;
+  document.getElementById('doorAreaInput').value = state.openings.doorArea;
+  updateOpeningsNote();
+  renderSelect('facadeSelect', FACADE, state.facade, v=>state.facade=v);
+
+  document.getElementById('regionSelect').value = state.region;
+  document.getElementById('regionNote').classList.toggle('show', !!REGIONS[state.region].seismic);
+
+  // цоколь
+  document.getElementById('tsokolToggle').classList.toggle('active', state.tsokol.enabled);
+  document.getElementById('tsokolFilters').classList.toggle('show', state.tsokol.enabled);
+  if(state.tsokol.enabled){
+    renderRow3('tsokolHeightRow', TSOKOL_HEIGHT, v=>state.tsokol.height=v, state.tsokol.height);
+    renderRow3('tsokolMaterialRow', TSOKOL_MATERIAL, v=>state.tsokol.material=v, state.tsokol.material);
+    renderRow3('tsokolWidthRow', TSOKOL_WIDTH, v=>state.tsokol.width=v, state.tsokol.width);
+  }
+
+  // детальные цены
+  document.getElementById('detailToggle').classList.toggle('active', state.detailMode);
+  document.getElementById('detailPanel').classList.toggle('show', state.detailMode);
+  document.getElementById('detailNote').classList.toggle('show', state.detailMode);
+  if(state.detailMode && state.detail){
+    ensureMasonryFields();
+    if(!simpleDetailBound){
+      bindSimpleDetailInputs();
+      simpleDetailBound = true;
+    }
+  }
+
+  refreshOutputs();
+  if(state.activeTab === 'advice'){ renderAdvice(); }
+}
+
+function refreshOutputs(){
+  const items = computeLineItems();
+  const totalMin = items.reduce((s,i)=>s+i.min,0);
+  const totalMax = items.reduce((s,i)=>s+i.max,0);
+
+  document.getElementById('totalNum').innerHTML = fmt(totalMin) + ' – ' + fmt(totalMax) + ' <sup>₽</sup>';
+
+  const fbody = document.getElementById('forecastBody');
+  if(fbody){
+    let rows = '';
+    for(let y=1; y<=3; y++){
+      const lowMin = totalMin*Math.pow(1.05,y), lowMax = totalMax*Math.pow(1.05,y);
+      const highMin = totalMin*Math.pow(1.15,y), highMax = totalMax*Math.pow(1.15,y);
+      rows += `<tr><td class="name">${2026+y}</td><td class="range">${fmt(lowMin)} – ${fmt(lowMax)}</td><td class="range">${fmt(highMin)} – ${fmt(highMax)}</td></tr>`;
+    }
+    fbody.innerHTML = rows;
+  }
+  const perM2Min = totalMin/state.area, perM2Max = totalMax/state.area;
+  document.getElementById('perM2').textContent = fmt(perM2Min) + '–' + fmt(perM2Max) + ' ₽/м²';
+
+  const tl = estimateTimeline();
+  document.getElementById('timelineEst').textContent = `${tl.minM}–${tl.maxM} мес.`;
+
+  const crewQuery = `${CREW_QUERY[state.material]} ${REGIONS[state.region].label}`;
+  document.getElementById('findCrewAvito').href = 'https://yandex.ru/search/?text=' + encodeURIComponent('site:avito.ru ' + crewQuery);
+  document.getElementById('findCrewAll').href = 'https://yandex.ru/search/?text=' + encodeURIComponent(crewQuery + ' отзывы контакты');
+
+  document.getElementById('tableBody').innerHTML = items.map(it => `
+    <tr><td class="name">${it.name}</td><td class="range">${fmt(it.min)} – ${fmt(it.max)}</td></tr>
+  `).join('');
+
+  const bar = document.getElementById('dimBar');
+  const legend = document.getElementById('legend');
+  bar.innerHTML = ''; legend.innerHTML = '';
+  items.forEach(it=>{
+    const pct = (it.max/totalMax*100).toFixed(2);
+    const seg = document.createElement('div');
+    seg.className = 'seg-fill';
+    seg.style.width = pct + '%';
+    seg.style.background = COLORS[it.key] || '#888';
+    seg.textContent = pct > 8 ? pct+'%' : '';
+    bar.appendChild(seg);
+    const leg = document.createElement('span');
+    leg.innerHTML = `<i style="background:${COLORS[it.key]||'#888'}"></i>${it.name}`;
+    legend.appendChild(leg);
+  });
+  document.getElementById('tickMax').textContent = fmt(totalMax) + ' ₽';
+}
+
+// ======================= СОБЫТИЯ =======================
+
+document.getElementById('areaInput').addEventListener('input', e=>{
+  let v = parseInt(e.target.value)||0;
+  v = Math.max(20, Math.min(500, v));
+  state.area = v;
+  render();
+});
+document.getElementById('areaSlider').addEventListener('input', e=>{
+  state.area = parseInt(e.target.value);
+  render();
+});
+document.getElementById('winCountInput').addEventListener('input', e=>{
+  state.openings.windowsCount = Math.max(0, parseInt(e.target.value)||0);
+  refreshOutputs(); updateOpeningsNote();
+});
+document.getElementById('doorCountInput').addEventListener('input', e=>{
+  state.openings.doorsCount = Math.max(0, parseInt(e.target.value)||0);
+  refreshOutputs(); updateOpeningsNote();
+});
+document.getElementById('doorAreaInput').addEventListener('input', e=>{
+  state.openings.doorArea = parseFloat(e.target.value)||0;
+  refreshOutputs(); updateOpeningsNote();
+});
+document.getElementById('materialSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  state.material = btn.dataset.val;
+  state.thickness = 1;
+  render();
+});
+document.getElementById('thicknessRow').addEventListener('click', e=>{
+  const btn = e.target.closest('.thick-btn');
+  if(!btn) return;
+  state.thickness = parseInt(btn.dataset.idx);
+  render();
+});
+document.getElementById('regionSelect').addEventListener('change', e=>{
+  state.region = e.target.value;
+  render();
+});
+document.getElementById('finishList').addEventListener('click', e=>{
+  const opt = e.target.closest('.finish-opt');
+  if(!opt) return;
+  state.finish = opt.dataset.val;
+  render();
+});
+document.getElementById('tsokolToggle').addEventListener('click', ()=>{
+  state.tsokol.enabled = !state.tsokol.enabled;
+  render();
+});
+document.getElementById('detailToggle').addEventListener('click', ()=>{
+  state.detailMode = !state.detailMode;
+  if(state.detailMode && !state.detail){ initDetailDefaults(); }
+  render();
+});
+
+function renderAdvice(){
+  const m = MATERIALS[state.material];
+  const mm = m.thicknesses[state.thickness].mm;
+  const adv = MATERIAL_ADVICE[state.material];
+  const facadeIdx = state.facade;
+  const facadeAdv = FACADE_ADVICE[facadeIdx];
+  const facadeLabel = FACADE[facadeIdx].label;
+
+  let html = `
+    <div class="advice-head">Выбрано сейчас</div>
+    <div class="advice-title">${m.label}, ${mm} мм</div>
+
+    <div class="advice-card">
+      <h4>Теплопроводность</h4>
+      <p>${adv.thermal}</p>
+    </div>
+    <div class="advice-card">
+      <h4>Жара / холод / влажность на Кавказе</h4>
+      <p>${adv.climate}</p>
+    </div>
+    <div class="advice-card">
+      <h4>На что обратить внимание</h4>
+      <p>${adv.notes}</p>
+    </div>
+  `;
+
+  if(facadeAdv){
+    html += `
+      <div class="advice-card facade">
+        <h4>Отделка фасада: ${facadeLabel.split(' (')[0]}</h4>
+        <p>${facadeAdv}</p>
+      </div>
+    `;
+  }
+
+  html += `
+    <div class="advice-disclaimer">Это общие инженерные закономерности (теплопроводность, паропроницаемость, влагостойкость), а не расчёт конкретного дома. Итоговую толщину утепления под ваш участок и микроклимат должен подтвердить проектировщик — перепады температур и влажность заметно отличаются даже в пределах одного региона (побережье / равнина / горы).</div>
+  `;
+
+  document.getElementById('adviceView').innerHTML = html;
+}
+
+function switchTab(tab){
+  state.activeTab = tab;
+  document.getElementById('smetaView').style.display = tab === 'smeta' ? '' : 'none';
+  document.getElementById('adviceView').style.display = tab === 'advice' ? '' : 'none';
+  document.getElementById('tabSmeta').classList.toggle('active', tab === 'smeta');
+  document.getElementById('tabAdvice').classList.toggle('active', tab === 'advice');
+  if(tab === 'advice') renderAdvice();
+}
+document.getElementById('tabSmeta').addEventListener('click', ()=>switchTab('smeta'));
+document.getElementById('tabAdvice').addEventListener('click', ()=>switchTab('advice'));
+
+document.getElementById('pricesAccordionHead').addEventListener('click', ()=>{
+  document.getElementById('pricesAccordion').classList.toggle('open');
+});
+document.getElementById('forecastAccordionHead').addEventListener('click', ()=>{
+  document.getElementById('forecastAccordion').classList.toggle('open');
+});
+
+document.getElementById('roofExtrasToggle').addEventListener('click', ()=>{
+  state.roofExtras = !state.roofExtras;
+  render();
+});
+
+// ======================= ОПЛАТА ЧЕРЕЗ ЮKASSA (EMBEDDED WIDGET) =======================
+// Виджет открывается прямо на странице (не редирект), но токен для его запуска
+// (confirmation_token) обязан создаваться на бэкенде — там, где хранится секретный
+// ключ магазина. Положить секретный ключ в этот файл нельзя: его увидит любой
+// человек через "Просмотр кода страницы" и сможет создавать платежи от вашего имени.
+//
+// Когда подключите бэкенд, он должен:
+//   1) принять запрос "хочу оплатить 199₽"
+//   2) вызвать ЮKassa API: POST /v3/payments с confirmation.type = "embedded"
+//   3) вернуть сюда confirmation_token из ответа ЮKassa
+// Дальше эта функция сама отрисует форму оплаты внутри #yookassaWidgetContainer.
+
+async function fetchConfirmationToken(){
+  // ЗАМЕНИТЕ на реальный вызов своего бэкенда, например:
+  // const res = await fetch('/api/create-payment', { method:'POST' });
+  // const data = await res.json();
+  // return data.confirmation_token;
+  throw new Error('Бэкенд ещё не подключён: нет эндпоинта, который создаёт платёж в ЮKassa и отдаёт confirmation_token.');
+}
+
+document.getElementById('payLaunchBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('payLaunchBtn');
+  const note = document.getElementById('payStatusNote');
+  const container = document.getElementById('yookassaWidgetContainer');
+
+  if(typeof window.YooMoneyCheckoutWidget === 'undefined'){
+    note.textContent = 'Скрипт виджета ЮKassa не загрузился (заблокирован в этом окружении или нет сети). На реальном сайте после деплоя это заработает.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Загрузка формы оплаты...';
+  try{
+    const confirmationToken = await fetchConfirmationToken();
+    const checkout = new window.YooMoneyCheckoutWidget({
+      confirmation_token: confirmationToken,
+      return_url: window.location.origin + window.location.pathname + '?paid=true',
+      error_callback: function(error){ console.error('YooKassa widget error:', error); }
+    });
+    checkout.render('yookassaWidgetContainer');
+    checkout.on('success', function(){
+      state.roofUnlocked = true;
+      render();
+    });
+    btn.style.display = 'none';
+    note.style.display = 'none';
+  } catch(err){
+    note.textContent = '⚠ ' + err.message;
+    btn.disabled = false;
+    btn.textContent = 'Оплатить 199 ₽';
+  }
+});
+
+document.getElementById('themeToggle').addEventListener('click', ()=>{
+  const isLight = document.body.classList.toggle('theme-light');
+  document.getElementById('themeToggle').textContent = isLight ? '☾ Тёмная' : '☀ Светлая';
+});
+
+// проверяем возврат с оплаты ЮKassa (?paid=true в URL после успешной оплаты счёта)
+if(new URLSearchParams(window.location.search).get('paid') === 'true'){
+  state.roofUnlocked = true;
+  // чистим URL, чтобы параметр не остался в адресной строке при обновлении/шаринге
+  const cleanUrl = window.location.origin + window.location.pathname;
+  window.history.replaceState({}, document.title, cleanUrl);
+}
+
+render();
+</script>
+</body>
+</html>
